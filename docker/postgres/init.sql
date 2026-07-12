@@ -1,0 +1,4 @@
+-- PostgreSQL initialization script (runs on first start)
+-- Enable PostGIS spatial extensions
+CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

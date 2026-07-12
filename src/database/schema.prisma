@@ -1,0 +1,370 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  ON_TRIP
+  IN_SHOP
+  RETIRED
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_TRIP
+  OFF_DUTY
+  SUSPENDED
+}
+
+enum TripStatus {
+  DRAFT
+  DISPATCHED
+  COMPLETED
+  CANCELLED
+}
+
+enum MaintenanceType {
+  OIL_CHANGE
+  TYRE_CHANGE
+  BRAKE_REPAIR
+  ENGINE_SERVICE
+  OTHER
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ExpenseCategory {
+  TOLLS
+  PARKING
+  REPAIRS
+  INSURANCE
+  MISCELLANEOUS
+}
+
+enum GeofenceType {
+  CIRCLE
+  POLYGON
+}
+
+enum GpsDeviceStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum GeofenceEventType {
+  ENTER
+  EXIT
+}
+
+model Permission {
+  id              String           @id @default(uuid()) @db.Uuid
+  name            String           @unique // e.g. "CREATE_VEHICLE", "VIEW_ANALYTICS"
+  description     String?
+  rolePermissions RolePermission[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+
+  @@map("permissions")
+}
+
+model Role {
+  id              String           @id @default(uuid()) @db.Uuid
+  name            String           @unique // e.g. ADMIN, FLEET_MANAGER, DISPATCHER, DRIVER, SAFETY_OFFICER, FINANCIAL_ANALYST
+  description     String?
+  users           User[]
+  rolePermissions RolePermission[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+
+  @@map("roles")
+}
+
+model RolePermission {
+  roleId       String     @db.Uuid
+  permissionId String     @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id           String         @id @default(uuid()) @db.Uuid
+  email        String         @unique
+  password     String
+  name         String
+  phone        String?
+  roleId       String         @db.Uuid
+  role         Role           @relation(fields: [roleId], references: [id])
+  refreshToken String?
+  driver       Driver?
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+
+  @@map("users")
+}
+
+model Region {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique
+  description String?
+  vehicles    Vehicle[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@map("regions")
+}
+
+model VehicleType {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique
+  description String?
+  vehicles    Vehicle[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@map("vehicle_types")
+}
+
+model Vehicle {
+  id                 String             @id @default(uuid()) @db.Uuid
+  registrationNumber String             @unique
+  name               String
+  model              String
+  typeId             String             @db.Uuid
+  type               VehicleType        @relation(fields: [typeId], references: [id])
+  maxCapacity        Float              // In kilograms
+  odometer           Float              // In kilometers
+  acquisitionCost    Float
+  status             VehicleStatus      @default(AVAILABLE)
+  regionId           String?            @db.Uuid
+  region             Region?            @relation(fields: [regionId], references: [id])
+  gpsDevice          GpsDevice?
+  trips              Trip[]
+  maintenanceLogs    MaintenanceLog[]
+  fuelLogs           FuelLog[]
+  expenses           Expense[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  deletedAt          DateTime?
+
+  @@map("vehicles")
+}
+
+model Driver {
+  id              String       @id @default(uuid()) @db.Uuid
+  name            String
+  licenseNumber   String       @unique
+  licenseCategory String
+  licenseExpiry   DateTime
+  contactNumber   String
+  safetyScore     Float        @default(100.0)
+  status          DriverStatus @default(AVAILABLE)
+  userId          String?      @unique @db.Uuid
+  user            User?        @relation(fields: [userId], references: [id])
+  trips           Trip[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
+
+  @@map("drivers")
+}
+
+model Trip {
+  id              String      @id @default(uuid()) @db.Uuid
+  vehicleId       String      @db.Uuid
+  vehicle         Vehicle     @relation(fields: [vehicleId], references: [id])
+  driverId        String      @db.Uuid
+  driver          Driver      @relation(fields: [driverId], references: [id])
+  status          TripStatus  @default(DRAFT)
+  source          String
+  destination     String
+  cargoWeight     Float
+  plannedDistance Float
+  actualDistance  Float?
+  revenue         Float?
+  fuelUsed        Float?
+  finalOdometer   Float?
+  fuelLogs        FuelLog[]
+  expenses        Expense[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?
+
+  @@map("trips")
+}
+
+model GpsDevice {
+  id                 String             @id @default(uuid()) @db.Uuid
+  deviceId           String             @unique // hardware identifier
+  vehicleId          String             @unique @db.Uuid
+  vehicle            Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  status             GpsDeviceStatus    @default(ACTIVE)
+  lastConnectionTime DateTime?
+  liveLocation       LiveLocation?
+  locationHistory    LocationHistory[]
+  geofenceEvents     GeofenceEvent[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  deletedAt          DateTime?
+
+  @@map("gps_devices")
+}
+
+model LiveLocation {
+  id          String    @id @default(uuid()) @db.Uuid
+  gpsDeviceId String    @unique @db.Uuid
+  gpsDevice   GpsDevice @relation(fields: [gpsDeviceId], references: [id], onDelete: Cascade)
+  latitude    Float
+  longitude   Float
+  speed       Float     @default(0.0)
+  heading     Float     @default(0.0)
+  altitude    Float     @default(0.0)
+  location    Unsupported("geometry(Point, 4326)")
+  updatedAt   DateTime  @updatedAt
+
+  @@map("live_locations")
+}
+
+model LocationHistory {
+  id          String    @id @default(uuid()) @db.Uuid
+  gpsDeviceId String    @db.Uuid
+  gpsDevice   GpsDevice @relation(fields: [gpsDeviceId], references: [id], onDelete: Cascade)
+  latitude    Float
+  longitude   Float
+  speed       Float     @default(0.0)
+  heading     Float     @default(0.0)
+  altitude    Float     @default(0.0)
+  location    Unsupported("geometry(Point, 4326)")
+  timestamp   DateTime  @default(now())
+
+  @@index([gpsDeviceId, timestamp])
+  @@map("location_history")
+}
+
+model Geofence {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String          @unique
+  description    String?
+  type           GeofenceType    @default(CIRCLE)
+  radius         Float?          // In meters for CIRCLE
+  boundary       Unsupported("geometry(geometry, 4326)")
+  geofenceEvents GeofenceEvent[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+
+  @@map("geofences")
+}
+
+model GeofenceEvent {
+  id          String            @id @default(uuid()) @db.Uuid
+  geofenceId  String            @db.Uuid
+  geofence    Geofence          @relation(fields: [geofenceId], references: [id], onDelete: Cascade)
+  gpsDeviceId String            @db.Uuid
+  gpsDevice   GpsDevice         @relation(fields: [gpsDeviceId], references: [id], onDelete: Cascade)
+  eventType   GeofenceEventType
+  timestamp   DateTime          @default(now())
+
+  @@map("geofence_events")
+}
+
+model MaintenanceLog {
+  id          String            @id @default(uuid()) @db.Uuid
+  vehicleId   String            @db.Uuid
+  vehicle     Vehicle           @relation(fields: [vehicleId], references: [id])
+  type        MaintenanceType
+  cost        Float
+  vendor      String
+  date        DateTime
+  status      MaintenanceStatus @default(SCHEDULED)
+  description String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+
+  @@map("maintenance_logs")
+}
+
+model FuelLog {
+  id        String    @id @default(uuid()) @db.Uuid
+  vehicleId String    @db.Uuid
+  vehicle   Vehicle   @relation(fields: [vehicleId], references: [id])
+  tripId    String?   @db.Uuid
+  trip      Trip?     @relation(fields: [tripId], references: [id])
+  quantity  Float     // In liters
+  cost      Float
+  station   String
+  date      DateTime
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("fuel_logs")
+}
+
+model Expense {
+  id          String          @id @default(uuid()) @db.Uuid
+  vehicleId   String          @db.Uuid
+  vehicle     Vehicle         @relation(fields: [vehicleId], references: [id])
+  tripId      String?         @db.Uuid
+  trip        Trip?           @relation(fields: [tripId], references: [id])
+  category    ExpenseCategory
+  amount      Float
+  date        DateTime
+  description String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+
+  @@map("expenses")
+}
+
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  isRead    Boolean   @default(false)
+  type      String    // e.g. EXPIRY_REMINDER, SYSTEM_ALERT, TRIP_ASSIGNED
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String?   @db.Uuid
+  user      User?     @relation(fields: [userId], references: [id])
+  action    String    // e.g. LOGIN, CREATE_VEHICLE, DISPATCH_TRIP
+  entity    String    // e.g. VEHICLE, TRIP, DRIVER
+  entityId  String?
+  details   Json?
+  ipAddress String?
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@map("audit_logs")
+}
