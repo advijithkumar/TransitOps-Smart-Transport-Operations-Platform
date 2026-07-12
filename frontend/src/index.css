@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Odoo Premium Color Scheme */
+    --background: #f8f9fa;
+    --foreground: #212529;
+    
+    --card: #ffffff;
+    --card-foreground: #212529;
+    
+    --popover: #ffffff;
+    --popover-foreground: #212529;
+    
+    /* Signature Odoo Purple & Teal */
+    --primary: #714B67;
+    --primary-foreground: #ffffff;
+    
+    --secondary: #e8e2e6;
+    --secondary-foreground: #714B67;
+    
+    --muted: #f1f3f5;
+    --muted-foreground: #495057;
+    
+    --accent: #00A09D;
+    --accent-foreground: #ffffff;
+    
+    --destructive: #dc3545;
+    --destructive-foreground: #ffffff;
+    
+    --border: #e9ecef;
+    --input: #f1f3f5;
+    --ring: #714B67;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark mode optimized for Odoo-style palette */
+    --background: #111215;
+    --foreground: #f8f9fa;
+    
+    --card: #191b1f;
+    --card-foreground: #f8f9fa;
+    
+    --popover: #191b1f;
+    --popover-foreground: #f8f9fa;
+    
+    --primary: #a08197;
+    --primary-foreground: #111215;
+    
+    --secondary: #2c292e;
+    --secondary-foreground: #a08197;
+    
+    --muted: #24272c;
+    --muted-foreground: #adb5bd;
+    
+    --accent: #00B5B1;
+    --accent-foreground: #111215;
+    
+    --destructive: #e44d5a;
+    --destructive-foreground: #ffffff;
+    
+    --border: #2b2e35;
+    --input: #24272c;
+    --ring: #a08197;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+  
+  /* Headings with Odoo style Montserrat font */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', -apple-system, sans-serif;
+    font-weight: 700;
+    color: var(--foreground);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Odoo app-style colorful icon containers */
+.odoo-icon-container {
+  display: flex;
+  align-items: center;
+  justify-center: center;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Colors matching Odoo dashboard app tiles (Solid colors, white icons) */
+.odoo-icon-dashboard { background-color: #714B67; color: #ffffff; }
+.odoo-icon-vehicles  { background-color: #00A09D; color: #ffffff; }
+.odoo-icon-drivers   { background-color: #F0AD4E; color: #ffffff; }
+.odoo-icon-dispatch  { background-color: #0275D8; color: #ffffff; }
+.odoo-icon-tracking  { background-color: #D9534F; color: #ffffff; }
+.odoo-icon-maint     { background-color: #5CB85C; color: #ffffff; }
+.odoo-icon-fuel      { background-color: #6610F2; color: #ffffff; }
+.odoo-icon-expenses  { background-color: #E83E8C; color: #ffffff; }
+.odoo-icon-analytics { background-color: #28A745; color: #ffffff; }
+.odoo-icon-settings  { background-color: #6C757D; color: #ffffff; }
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.maplibregl-canvas-container {
+  outline: none;
+}

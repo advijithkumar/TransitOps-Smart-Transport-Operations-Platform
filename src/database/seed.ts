@@ -126,9 +126,10 @@ async function main() {
 
   // Dispatcher Mapping
   const dispatcherPermissions = [
-    "VIEW_VEHICLE", "VIEW_DRIVER",
+    "VIEW_VEHICLE", "VIEW_DRIVER", "CREATE_DRIVER", "UPDATE_DRIVER",
     "CREATE_TRIP", "UPDATE_TRIP", "VIEW_TRIP", "DISPATCH_TRIP", "COMPLETE_TRIP", "CANCEL_TRIP",
-    "VIEW_GEOFENCE", "VIEW_MAINTENANCE"
+    "VIEW_GEOFENCE", "VIEW_MAINTENANCE",
+    "CREATE_FUEL", "VIEW_FUEL", "CREATE_EXPENSE", "VIEW_EXPENSE"
   ];
   for (const perm of dispatcherPermissions) {
     await prisma.rolePermission.upsert({

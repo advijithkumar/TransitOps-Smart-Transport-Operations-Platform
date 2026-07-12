@@ -3,3 +3,4 @@ node_modules
 TransitOps_Enterprise_Backend_Specification.md
 "Transitops - smart transport operations platform - 8 hours.svg"
 .github
+frontend/node_modules
