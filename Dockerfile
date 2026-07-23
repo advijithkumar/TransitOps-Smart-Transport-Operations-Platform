@@ -1,6 +1,6 @@
 # ─── Build Stage ──────────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
-RUN apk add --no-cache openssl libc6-compat
+RUN apk add --no-cache openssl libc6-compat curl
 WORKDIR /app
 
 COPY package*.json ./
@@ -17,7 +17,7 @@ RUN npm run build
 # ─── Production Stage ─────────────────────────────────────────────────────────
 FROM node:20-alpine AS production
 
-RUN apk add --no-cache dumb-init openssl
+RUN apk add --no-cache dumb-init openssl curl
 
 WORKDIR /app
 
